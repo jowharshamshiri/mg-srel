@@ -1,0 +1,24 @@
+[package]
+authors = ["https://github.com/jowharshamshiri"]
+description = "Verifies signed release manifests and registry charters against baked root keys"
+edition = "2021"
+rust-version = "1.89"
+license = "MIT"
+name = "signed-release"
+readme = "README.md"
+version = "0.1.0"
+
+[dependencies]
+# Raw ed25519 over exact bytes: certificates, manifest signatures and charter
+# signatures are not minisign-prehashed, so the platform verifiers stay simple.
+ed25519-dalek = "2"
+# Minisign signatures over artifacts (`.minisig`), whose trusted comment is
+# signed too. Zero dependencies of its own.
+minisign-verify = "0.2"
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+thiserror = "1.0"
+
+[dev-dependencies]
+# Registry folders for the stored-charter tests.
+tempfile = "3.10"
