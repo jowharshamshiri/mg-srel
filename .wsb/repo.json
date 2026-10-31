@@ -1,0 +1,10 @@
+{
+  "name": "signed-release",
+  "alias": "signed_release",
+  "templates_root": "..",
+  "version": {
+    "major": 0,
+    "file": "version.txt",
+    "detect_manifests": true
+  }
+}
