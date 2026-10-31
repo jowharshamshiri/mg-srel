@@ -6,7 +6,7 @@ rust-version = "1.80"
 license = "MIT"
 name = "signed-release"
 readme = "README.md"
-version = "0.2.0"
+version = "0.1.0"
 
 [dependencies]
 # Raw ed25519 over exact bytes: certificates, manifest signatures and charter
