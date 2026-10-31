@@ -224,8 +224,10 @@ pub(crate) fn authorize(
     if certificates.is_empty() {
         return Err(ChainError::EmptyCertificateList);
     }
-    let release_keys =
-        certificates.iter().map(|entry| verify_certificate(entry, trust, now)).collect::<Result<Vec<_>, _>>()?;
+    let release_keys = certificates
+        .iter()
+        .map(|entry| verify_certificate(entry, trust, now).map(|verified| verified.release_key))
+        .collect::<Result<Vec<_>, _>>()?;
     let signer = release_keys
         .iter()
         .find(|key| key.key_id == signature.key_id)
@@ -234,9 +236,17 @@ pub(crate) fn authorize(
     Ok(VerifiedChain { release_keys })
 }
 
-/// One certificate against the roots, the label and the clock, and the release
-/// key it authorizes.
-fn verify_certificate(entry: &CertificateEntry, trust: &Trust, now: u64) -> Result<PublicKey, ChainError> {
+/// A certificate that verified, and the release key it authorizes.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct VerifiedCertificate {
+    pub certificate: Certificate,
+    pub release_key: PublicKey,
+}
+
+/// One certificate against the roots, the label and the clock, on its own: what
+/// an envelope's every certificate is held to, for a certificate that is about
+/// to be put in one.
+pub fn verify_certificate(entry: &CertificateEntry, trust: &Trust, now: u64) -> Result<VerifiedCertificate, ChainError> {
     let certificate: Certificate =
         serde_json::from_str(&entry.certificate).map_err(|e| ChainError::MalformedCertificate(e.to_string()))?;
     if certificate.format != trust.formats.certificate {
@@ -283,7 +293,7 @@ fn verify_certificate(entry: &CertificateEntry, trust: &Trust, now: u64) -> Resu
             now,
         });
     }
-    Ok(release_key)
+    Ok(VerifiedCertificate { certificate, release_key })
 }
 
 #[cfg(test)]

@@ -197,3 +197,28 @@ fn test0015_a_trust_needs_two_distinct_roots() {
     assert!(Trust::new(&[&a, &a], "prod", formats()).is_err());
     assert!(Trust::new(&[&a, "not a key"], "prod", formats()).is_err());
 }
+
+// TEST0024: a certificate verifies on its own, before any document is signed
+// under it, and is held to the same roots, label and clock an envelope's are.
+#[test]
+fn test0024_a_certificate_verifies_on_its_own() {
+    let fx = Fixture::new();
+    let cert = certificate(CERTIFICATE, &fx.release, "prod", ISSUED_AT, NOT_AFTER);
+    let verified = verify_certificate(&entry(cert.clone(), &[&fx.roots[1], &fx.roots[2]]), &fx.trust("prod"), NOW)
+        .expect("a certificate two roots signed verifies");
+    assert_eq!(verified.certificate.key_id, fx.release.id());
+    assert_eq!(verified.certificate.not_after, NOT_AFTER);
+    assert_eq!(verified.release_key.text, fx.release.public());
+    assert!(matches!(
+        verify_certificate(&entry(cert.clone(), &[&fx.roots[1], &fx.roots[2]]), &fx.trust("staging"), NOW),
+        Err(ChainError::LabelMismatch { .. })
+    ));
+    assert!(matches!(
+        verify_certificate(&entry(cert.clone(), &[&fx.roots[1]]), &fx.trust("prod"), NOW),
+        Err(ChainError::InsufficientRootSignatures { have: 1, .. })
+    ));
+    assert!(matches!(
+        verify_certificate(&entry(cert, &[&fx.roots[1], &fx.roots[2]]), &fx.trust("prod"), NOT_AFTER + 1),
+        Err(ChainError::ExpiredCertificate { .. })
+    ));
+}
