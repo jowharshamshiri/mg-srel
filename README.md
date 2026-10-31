@@ -1,4 +1,4 @@
-# signed-release
+# mg-srel
 
 Verifies what a publisher signed, against the root keys a client was built with.
 
@@ -22,7 +22,7 @@ charters are signed under, and the kinds of registry a project charters are give
 caller, from the project's own declaration.
 
 ```rust
-use signed_release::{verify_manifest, Formats, Trust};
+use mg_srel::{verify_manifest, Formats, Trust};
 
 let trust = Trust::new(
     &[ROOT_A, ROOT_B, ROOT_C],
@@ -32,7 +32,7 @@ let trust = Trust::new(
         envelope: "example-manifest-sig/1".into(),
     },
 )?;
-let chain = verify_manifest(&envelope_bytes, &manifest_bytes, &trust, signed_release::unix_now())?;
+let chain = verify_manifest(&envelope_bytes, &manifest_bytes, &trust, mg_srel::unix_now())?;
 ```
 
 Every check is a hard failure, and a refusal carries a [`Reason`] from a closed vocabulary, so

@@ -1,6 +1,6 @@
 {
-  "name": "signed-release",
-  "alias": "signed_release",
+  "name": "mg-srel",
+  "alias": "mg_srel",
   "templates_root": "..",
   "version": {
     "major": 0,

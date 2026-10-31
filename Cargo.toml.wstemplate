@@ -4,8 +4,12 @@ description = "Verifies signed release manifests and registry charters against b
 edition = "2021"
 rust-version = "1.80"
 license = "MIT"
-name = "signed-release"
+name = "mg-srel"
 readme = "README.md"
+repository = "https://github.com/jowharshamshiri/mg-srel"
+keywords = ["signature", "ed25519", "minisign", "release", "manifest"]
+categories = ["cryptography"]
+include = ["src/**/*.rs", "README.md", "LICENSE"]
 version = "{{ project.version }}"
 
 [dependencies]
