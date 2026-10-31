@@ -206,6 +206,22 @@ fn test0021_a_signed_charter_of_the_wrong_shape_is_malformed() {
             .unwrap_err();
         assert_eq!(error.reason(), Reason::CharterMalformed, "{what}: {error}");
     }
+    // Plain http is admitted to the loopback interface alone, which a request never leaves.
+    for host in ["127.0.0.1:8080", "localhost:8080", "[::1]:8080", "127.0.0.1"] {
+        let mut local = mirror();
+        local.anchor = format!("http://{host}");
+        local.locations = BTreeMap::from([
+            ("index".to_string(), format!("http://{host}/index/{{version}}.json")),
+            ("latest".to_string(), format!("http://{host}/latest.json")),
+        ]);
+        assert_eq!(local.validate(&rules()), Ok(()), "{host}");
+    }
+    for host in ["example.com", "127.0.0.1.example.com", "10.0.0.1:80", "[::2]:80", "localhost.example"] {
+        let mut remote = mirror();
+        remote.anchor = format!("http://{host}");
+        assert!(remote.validate(&rules()).unwrap_err().contains("is not an https URL"), "{host}");
+    }
+
     let mut releases = mirror();
     releases.kind = "releases".to_string();
     releases.locations = BTreeMap::from([("manifest".to_string(), format!("{ANCHOR}/{{app_id}}/manifest"))]);

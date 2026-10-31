@@ -38,6 +38,11 @@ pub(crate) fn decode(text: &str) -> Option<Vec<u8>> {
             bits = 0;
         }
     }
+    // The bytes the padding stands for are zero in a canonical encoding: bits
+    // set there are a second spelling of the same value.
+    if out[out.len() - padding..].iter().any(|byte| *byte != 0) {
+        return None;
+    }
     out.truncate(out.len() - padding);
     Some(out)
 }
@@ -87,6 +92,10 @@ mod tests {
         assert_eq!(decode("QQ==QUJD"), None);
         assert_eq!(decode("Q==="), None);
         assert_eq!(decode("===="), None);
+        assert_eq!(decode("QR=="), None, "bits set where the padding says there are none");
+        assert_eq!(decode("QUJ="), None, "bits set where the padding says there are none");
+        assert_eq!(decode("QUI="), Some(b"AB".to_vec()));
+        assert_eq!(decode("QQ=="), Some(b"A".to_vec()));
         assert_eq!(decode("QUJD "), None);
         assert_eq!(decode("QUJD"), Some(b"ABC".to_vec()));
     }

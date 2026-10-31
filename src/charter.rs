@@ -343,7 +343,7 @@ impl Charter {
                 .locations
                 .get(&location.name)
                 .ok_or_else(|| format!("a {} registry must declare location '{}'", kind.name, location.name))?;
-            check_https(&format!("location '{}'", location.name), template)?;
+            check_scheme(&format!("location '{}'", location.name), template)?;
             let used = placeholders_in(template).map_err(|e| format!("location '{}': {e}", location.name))?;
             if let Some(stray) = used.iter().find(|used| !location.placeholders.contains(used)) {
                 return Err(format!("location '{}' uses '{{{stray}}}', which it does not take", location.name));
@@ -447,26 +447,46 @@ pub fn is_experiment_id(s: &str) -> bool {
         && bytes.iter().all(|b| b.is_ascii_lowercase() || b.is_ascii_digit() || *b == b'-')
 }
 
-/// An https URL naming a place: no trailing `/`, query or fragment.
+/// A URL naming a place: see [`check_scheme`], and no trailing `/`.
 fn check_url(what: &str, url: &str) -> Result<(), String> {
-    check_https(what, url)?;
+    check_scheme(what, url)?;
     if url.ends_with('/') {
         return Err(format!("{what} '{url}' ends with '/'"));
     }
     Ok(())
 }
 
-fn check_https(what: &str, url: &str) -> Result<(), String> {
-    match url.split_once("://") {
-        Some(("https", rest)) if !rest.is_empty() && !rest.starts_with('/') => {
-            if url.contains(['?', '#']) {
-                Err(format!("{what} '{url}' carries a query or fragment"))
-            } else {
-                Ok(())
-            }
-        }
-        _ => Err(format!("{what} '{url}' is not an https URL")),
+/// An https URL with a host and no query or fragment — or an http one to the
+/// loopback interface, which never leaves the machine it is read on: a
+/// registry served there for a test of a whole client is held to its
+/// signatures like any other.
+fn check_scheme(what: &str, url: &str) -> Result<(), String> {
+    let refused = || Err(format!("{what} '{url}' is not an https URL"));
+    let Some((scheme, rest)) = url.split_once("://") else {
+        return refused();
+    };
+    if rest.is_empty() || rest.starts_with('/') {
+        return refused();
     }
+    if url.contains(['?', '#']) {
+        return Err(format!("{what} '{url}' carries a query or fragment"));
+    }
+    match scheme {
+        "https" => Ok(()),
+        "http" if is_loopback(rest) => Ok(()),
+        _ => refused(),
+    }
+}
+
+/// Whether the authority at the start of `rest` (`host[:port]/…`) is the
+/// loopback interface.
+fn is_loopback(rest: &str) -> bool {
+    let authority = rest.split('/').next().unwrap_or_default();
+    let host = match authority.strip_prefix('[') {
+        Some(bracketed) => bracketed.split(']').next().unwrap_or_default(),
+        None => authority.rsplit_once(':').map_or(authority, |(host, _)| host),
+    };
+    host == "localhost" || host.parse::<std::net::IpAddr>().is_ok_and(|ip| ip.is_loopback())
 }
 
 /// The `{name}` placeholders a template uses, in order of first use. A stray
