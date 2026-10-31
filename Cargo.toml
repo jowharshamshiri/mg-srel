@@ -10,7 +10,7 @@ repository = "https://github.com/jowharshamshiri/mg-srel"
 keywords = ["signature", "ed25519", "minisign", "release", "manifest"]
 categories = ["cryptography"]
 include = ["src/**/*.rs", "README.md", "LICENSE"]
-version = "0.1.0"
+version = "0.5.12"
 
 [dependencies]
 # Raw ed25519 over exact bytes: certificates, manifest signatures and charter
