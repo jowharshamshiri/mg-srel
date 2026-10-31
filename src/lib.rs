@@ -40,8 +40,8 @@ mod key;
 mod reason;
 
 pub use chain::{
-    unix_now, verify_manifest, Certificate, CertificateEntry, ChainError, DocumentSignature, Formats,
-    ManifestEnvelope, RootSignature, Trust, VerifiedChain, REQUIRED_ROOT_SIGNATURES,
+    unix_now, verify_certificate, verify_manifest, Certificate, CertificateEntry, ChainError, DocumentSignature,
+    Formats, ManifestEnvelope, RootSignature, Trust, VerifiedCertificate, VerifiedChain, REQUIRED_ROOT_SIGNATURES,
 };
 pub use charter::{
     is_experiment_id, is_slug, placeholders_in, store, verify_charter, verify_stored, Charter, CharterEnvelope,
